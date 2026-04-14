@@ -488,11 +488,12 @@ import { AsuRfi } from "@asu/app-rfi";
 **figmaSignals:** "Request Information" form, multi-step form, prospective student lead capture, "Apply Now" style form.
 
 **Pitfalls:**
-- `submissionUrl` must be a configured ASU endpoint — form will error without it.
-- Needs `client:load` — form is fully interactive.
+- `submissionUrl` is REQUIRED — form renders blank / silently fails without it. Always pass it.
+- Must use `client:only="react"` — `@asu/app-rfi` accesses `document` at module load (SSR crash with `client:load`).
 - FontAwesome must be loaded globally for form icons.
 - Google Tag Manager / `dataLayer` required for analytics integration in production.
-- Use `test: true` during development to avoid real form submissions.
+- Always pass `test={true}` during development to avoid real form submissions. Set `test={false}` only for production.
+- Without `variant`, `campus`, `country`, `stateProvince`, the form may render blank or partially — provide all key props.
 - Peer dependencies: `react`, `react-dom` only — `@asu/components-core` is NOT required (deprecated).
 
 **Wrapper pattern:**
@@ -502,12 +503,34 @@ import { AsuRfi } from "@asu/app-rfi";
 import { AsuRfi } from "@asu/app-rfi";
 import "@asu/unity-bootstrap-theme";
 
-const RFISection = ({ submissionUrl, studentType = "undergrad" }) => {
+const RFISection = ({
+  campus = "NOPREF",
+  studentType = "undergrad",
+  variant = "rfiVariant1",
+  country = "US",
+  stateProvince = "Arizona",
+  successMsg = "Thank you! We'll be in touch soon.",
+  test = true,
+  submissionUrl = "https://httpbin.org/post",
+  college,
+  department,
+  areaOfInterest,
+  programOfInterest,
+}) => {
   return (
     <AsuRfi
-      submissionUrl={submissionUrl}
+      campus={campus}
       studentType={studentType}
-      test={true}
+      variant={variant}
+      country={country}
+      stateProvince={stateProvince}
+      successMsg={successMsg}
+      test={test}
+      submissionUrl={submissionUrl}
+      college={college}
+      department={department}
+      areaOfInterest={areaOfInterest}
+      programOfInterest={programOfInterest}
     />
   );
 };
@@ -515,7 +538,38 @@ const RFISection = ({ submissionUrl, studentType = "undergrad" }) => {
 export default RFISection;
 ```
 
-**Astro usage:** `<RFISection client:load submissionUrl={content.rfi.submissionUrl} />`
+**`page-content.json` shape:**
+
+```json
+"rfi": {
+  "campus": "NOPREF",
+  "studentType": "undergrad",
+  "variant": "rfiVariant1",
+  "country": "US",
+  "stateProvince": "Arizona",
+  "successMsg": "Thank you! We'll be in touch soon.",
+  "test": true,
+  "submissionUrl": "https://httpbin.org/post"
+}
+```
+
+> Replace `submissionUrl` with the real ASU submission endpoint for production. Set `test` to `false` in production.
+
+**Astro usage:**
+
+```astro
+<RFISection
+  client:only="react"
+  campus={content.rfi.campus}
+  studentType={content.rfi.studentType}
+  variant={content.rfi.variant}
+  country={content.rfi.country}
+  stateProvince={content.rfi.stateProvince}
+  successMsg={content.rfi.successMsg}
+  test={content.rfi.test}
+  submissionUrl={content.rfi.submissionUrl}
+/>
+```
 
 ---
 
@@ -1064,7 +1118,7 @@ Match against figmaSignals in this catalog
 | `CardListlNews`        | `client:load`         | Fetches feed client-side                            |
 | `EventList`            | `client:load`         | Fetches feed client-side                            |
 | `DegreeList`           | `client:load`         | Full client-side app                                |
-| `AsuRfi`               | `client:load`         | Interactive multi-step form                         |
+| `AsuRfi`               | `client:only="react"` | Accesses `document` at module load — SSR crash with `client:load` |
 | `WebDirectoryComponent`| `client:load`         | Full client-side search app                         |
 | Any `@asu/unity-react-core` component | `client:only="react"` | Accesses `document` at module load — SSR crash |
 

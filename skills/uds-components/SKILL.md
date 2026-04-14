@@ -108,7 +108,7 @@ Read `references/uds-css-patterns.md` for:
 - Google Analytics `data-ga-*` attributes for all interactive elements
 - GitHub Storybook story URL pattern for dynamic lookup of unlisted patterns
 
-Read `../../components/` for **working implementation examples**:
+Read `../components/` for **working implementation examples**:
 
 These are generic, production-ready wrapper components you can copy and adapt directly.
 Each file shows the correct import pattern, CSS import, props, and JSX structure.

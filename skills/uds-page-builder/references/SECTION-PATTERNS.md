@@ -93,12 +93,27 @@ at module load time — not inside lifecycle methods. This means even `client:lo
 **Problem:** `Hero` buttons without `href` render visually but are completely non-functional.
 Using Bootstrap color names (`'primary'`, `'secondary'`) silently falls back to unstyled button.
 
-**Required button shape:**
+**Build mode (user-provided design):**
 
 ```jsx
 buttons={[
   { color: 'maroon', size: 'default', label: 'Primary CTA', href: '/apply' },
   { color: 'gold', size: 'default', label: 'Secondary CTA', href: '/learn-more' },
+]}
+```
+
+**Campaign landing page mode — SINGLE CTA ONLY (scroll to RFI):**
+
+```jsx
+// ✅ Campaign mode: one button, anchors to #rfi, never navigates away
+buttons={[
+  { color: 'maroon', size: 'default', label: 'Request Information', href: '#rfi' },
+]}
+
+// ❌ Never in campaign mode — secondary CTA navigates user away from page
+buttons={[
+  { color: 'maroon', size: 'default', label: 'Apply Now', href: '/apply' },
+  { color: 'gold', size: 'default', label: 'Learn More', href: '/programs' },  // ❌
 ]}
 ```
 
@@ -309,7 +324,7 @@ import content from '../content/page-content.json';
 | `CardGridNews`         | `client:load`         | Client-side data fetch              |
 | `EventList`            | `client:load`         | Client-side data fetch              |
 | `DegreeList`           | `client:load`         | Full SPA                            |
-| `RFIForm`              | `client:load`         | Interactive form                    |
+| `AsuRfi` / `RFISection`| `client:only="react"` | Accesses `document` at module load — SSR crash with `client:load` |
 | `WebDirectoryComponent`| `client:load`         | Full SPA                            |
 
 > **Rule:** ANY component from `@asu/unity-react-core` must use `client:only="react"`. This package accesses `document` at module load time, which causes SSR crash with `client:load`.
@@ -397,6 +412,148 @@ The CSS rule requires both classes on the same element: `.bg.network-white { bac
 
 This applies to ALL pattern classes: `morse-code-white/black`, `network-white/black`, `topo-white/black`,
 `semiconductor-light/dark`, `plus-light/dark`, `arrows-light/dark`.
+
+---
+
+## 15. AsuRfi — required props and client directive (CRITICAL)
+
+**Problem:** `@asu/app-rfi` accesses `document` at module load — same as `unity-react-core`.
+Using `client:load` causes SSR crash. The form also silently renders blank if key props are missing.
+
+**Always use `client:only="react"`:**
+
+```astro
+<!-- ✅ Correct -->
+<RFISection client:only="react" ... />
+
+<!-- ❌ Wrong — SSR crash: "document is not defined" -->
+<RFISection client:load ... />
+```
+
+**All key props must be passed — form renders blank without them:**
+
+```astro
+<RFISection
+  client:only="react"
+  campus={content.rfi.campus}
+  studentType={content.rfi.studentType}
+  variant={content.rfi.variant}
+  country={content.rfi.country}
+  stateProvince={content.rfi.stateProvince}
+  successMsg={content.rfi.successMsg}
+  test={content.rfi.test}
+  submissionUrl={content.rfi.submissionUrl}
+/>
+```
+
+**Required `page-content.json` shape:**
+
+```json
+"rfi": {
+  "campus": "NOPREF",
+  "studentType": "undergrad",
+  "variant": "rfiVariant1",
+  "country": "US",
+  "stateProvince": "Arizona",
+  "successMsg": "Thank you! We'll be in touch soon.",
+  "test": true,
+  "submissionUrl": "https://httpbin.org/post"
+}
+```
+
+> `submissionUrl` defaults to `https://httpbin.org/post` for safe dev testing.
+> Set `test: false` and replace with real ASU endpoint in production.
+
+**Minimum props that cause blank render if omitted:** `submissionUrl`, `campus`, `studentType`, `variant`.
+
+---
+
+---
+
+## 16. Campaign Landing Page Mode — Single-CTA and RFI placement
+
+> These rules apply ONLY in campaign mode (Step 0 Mode B in SKILL.md). They do NOT apply when the user provides screenshots or section descriptions.
+
+### What is campaign mode?
+
+The user provides a keyword or topic only — no screenshots, no section list. The skill generates the entire page from the keyword. Examples: "AI engineering degrees", "online MBA program", "nursing accelerated BSN".
+
+### Single-CTA rule
+
+Every interactive element that would otherwise link away from the page must either be removed or converted to a scroll-to-RFI anchor.
+
+```jsx
+// ✅ The only permitted external-feeling action — scrolls to the RFI form on the same page
+<a href="#rfi" className="btn btn-maroon">Request Information</a>
+
+// ❌ Prohibited in campaign mode — navigates user away
+<a href="/programs">View All Programs</a>
+<a href="/apply">Apply Now</a>       // unless this links to an anchor on the same page
+<a href="https://...">Learn More</a>
+```
+
+**This applies to:**
+- Hero buttons
+- Card buttons (HorizontalCards, ImageBasedCardAndHover)
+- Carousel card buttons
+- Section CTAs / banner buttons
+- Any standalone Button.jsx usage
+
+### RFI form placement
+
+The `app-rfi.jsx` component (wrapper around `@asu/app-rfi`) must always be rendered as the last content section before the footer. It must have `id="rfi"` so anchor links work.
+
+```astro
+<!-- ✅ Campaign mode RFI section -->
+<section id="rfi" className="bg-maroon py-5">
+  <div class="container">
+    <h2 class="text-white text-center mb-4">{content.rfi.sectionHeading}</h2>
+    <RFISection
+      client:only="react"
+      campus={content.rfi.campus}
+      studentType={content.rfi.studentType}
+      variant={content.rfi.variant}
+      country={content.rfi.country}
+      stateProvince={content.rfi.stateProvince}
+      successMsg={content.rfi.successMsg}
+      test={content.rfi.test}
+      submissionUrl={content.rfi.submissionUrl}
+    />
+  </div>
+</section>
+```
+
+Add `rfi.sectionHeading` to `page-content.json` with keyword-aligned copy, e.g.:
+`"sectionHeading": "Start Your AI Engineering Journey — Request Information Today"`
+
+### Nav items — in-page anchors only
+
+```json
+"items": [
+  { "text": "About", "href": "#about", "children": [] },
+  { "text": "Programs", "href": "#programs", "children": [] },
+  { "text": "Outcomes", "href": "#outcomes", "children": [] },
+  { "text": "Request Info", "href": "#rfi", "children": [] }
+]
+```
+
+### Programs / degrees — inline rendering, no external links
+
+If programs need to be listed, render them inline with UDS components. Never add a "See all programs" link.
+
+```jsx
+// ✅ Inline card grid — programs rendered on the page
+<HorizontalCards
+  cards={content.programs.map(p => ({
+    title: p.name,
+    body: p.description,    // 1-2 sentence differentiator
+    buttons: [{ color: 'maroon', label: 'Request Information', href: '#rfi' }]
+  }))}
+/>
+
+// ❌ External link to program catalog
+<a href="https://degrees.asu.edu/...">See All Programs</a>
+```
 
 ---
 

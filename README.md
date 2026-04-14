@@ -17,8 +17,9 @@ skills/                                    ← this repo
 ├── skills/
 │   ├── uds-page-builder/                  ← build a full page from description or screenshot
 │   ├── uds-components/                    ← add individual UDS components to an existing project
-│   └── uds-reviewer/                      ← validate a built page against UDS standards
-├── components/                            ← working component examples (storybook-sourced)
+│   ├── uds-reviewer/                      ← validate a built page against UDS standards
+│   ├── uds-brand-guide/                   ← ASU brand defaults (colors, fonts, voice, layout)
+│   └── components/                        ← working component examples (storybook-sourced)
 ├── scripts/
 │   └── copy-css.cjs                       ← copies UDS CSS into public/ after npm install
 └── uds-consolidation-upgrade-guide.pdf    ← UDS 2025 package consolidation reference
@@ -26,13 +27,16 @@ skills/                                    ← this repo
 
 ---
 
-## The three workflows
+## The four workflows
 
 | Skill | When to use |
 |-------|-------------|
 | **uds-page-builder** | Start a new landing page from a text brief or design screenshot |
 | **uds-components** | Add a specific component (carousel, news feed, RFI form, etc.) to an existing project |
 | **uds-reviewer** | Check a built page for UDS compliance, broken builds, and accessibility issues |
+| **uds-brand-guide** | Apply ASU brand defaults when design input is missing or incomplete; check brand violations |
+
+> **uds-brand-guide** is also used **automatically** inside `uds-page-builder` and `uds-reviewer` — you don't need to invoke it separately unless you want a standalone brand compliance check.
 
 ---
 

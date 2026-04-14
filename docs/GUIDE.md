@@ -106,7 +106,7 @@ Validates a built page against UDS standards, build health, and accessibility.
 
 ---
 
-## Component examples (`components/`)
+## Component examples (`skills/components/`)
 
 Production-ready, storybook-sourced wrapper components used by the skills as copy-ready templates.
 
@@ -215,7 +215,7 @@ Astro 4 reserves `src/content/` for content collections. Always use `src/data/pa
 
 The skills are plain Markdown files. Anyone can update them.
 
-1. **Add a new component** — add an entry to `skills/uds-components/references/uds-catalog.md` and add a working example in `components/`
+1. **Add a new component** — add an entry to `skills/uds-components/references/uds-catalog.md` and add a working example in `skills/components/`
 2. **Document a new pitfall** — add it to `skills/uds-page-builder/references/SECTION-PATTERNS.md`
 3. **Update a skill workflow** — edit the relevant `skills/*/SKILL.md` file
 4. **Update package versions** — update this guide and the `package.json` template in `uds-page-builder/SKILL.md`
